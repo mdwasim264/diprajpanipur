@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { showSuccess } from '@/utils/toast';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
   { id: 'pani-puri', name: 'Pani Puri' },
@@ -13,6 +23,8 @@ const CATEGORIES = [
   { id: 'sev-puri', name: 'Sev Puri' },
   { id: 'combos', name: 'Special Combos' },
 ];
+
+const TASTES = ['Spicy', 'Sweet', 'Mix'];
 
 const PRODUCTS = [
   {
@@ -70,6 +82,8 @@ const Index = () => {
   const { user, profile } = useAuth();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedTaste, setSelectedTaste] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const trackClick = async (productId: string) => {
     if (!user) return;
@@ -81,12 +95,18 @@ const Index = () => {
 
   const filteredProducts = PRODUCTS.filter(p => 
     (activeCategory === 'all' || p.category === activeCategory) &&
+    (selectedTaste === null || p.taste === selectedTaste) &&
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const recommendedProducts = profile?.taste 
     ? PRODUCTS.filter(p => p.taste === profile.taste).slice(0, 2)
     : PRODUCTS.slice(0, 2);
+
+  const resetFilters = () => {
+    setSelectedTaste(null);
+    setActiveCategory('all');
+  };
 
   return (
     <div className="p-4 space-y-6">
@@ -124,19 +144,82 @@ const Index = () => {
         <Sparkles className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
       </motion.div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search your favorite puri..."
-          className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-[#FF6B00] transition-all text-sm font-medium"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[#FF6B00] bg-white p-1.5 rounded-lg shadow-sm">
-          <Filter size={16} />
-        </button>
+      {/* Search Bar & Filter */}
+      <div className="relative flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search your favorite puri..."
+            className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-[#FF6B00] transition-all text-sm font-medium"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        
+        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <SheetTrigger asChild>
+            <button className={`p-4 rounded-2xl shadow-sm transition-all ${selectedTaste ? 'bg-[#FF6B00] text-white' : 'bg-white text-[#FF6B00] border border-gray-100'}`}>
+              <Filter size={20} />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-[2.5rem] h-[60vh] p-6">
+            <SheetHeader className="flex flex-row items-center justify-between">
+              <SheetTitle className="text-xl font-black">Filters</SheetTitle>
+              <button onClick={resetFilters} className="text-xs font-bold text-[#FF6B00] uppercase tracking-wider">Reset All</button>
+            </SheetHeader>
+            
+            <div className="mt-8 space-y-8">
+              {/* Taste Filter */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Select Taste</h3>
+                <div className="flex flex-wrap gap-3">
+                  {TASTES.map((taste) => (
+                    <button
+                      key={taste}
+                      onClick={() => setSelectedTaste(selectedTaste === taste ? null : taste)}
+                      className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
+                        selectedTaste === taste 
+                        ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' 
+                        : 'bg-white border-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {taste}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category Filter (Quick Access) */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Category</h3>
+                <div className="flex flex-wrap gap-3">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(activeCategory === cat.id ? 'all' : cat.id)}
+                      className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
+                        activeCategory === cat.id 
+                        ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' 
+                        : 'bg-white border-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <SheetFooter className="mt-auto pt-6">
+              <SheetClose asChild>
+                <Button className="w-full bg-[#FF6B00] hover:bg-[#e66000] text-white h-14 rounded-2xl font-black text-lg shadow-xl shadow-orange-100">
+                  Apply Filters
+                </Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Recommended Section */}
@@ -185,7 +268,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* Categories */}
+      {/* Categories Quick Bar */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-red-100 rounded-lg">
@@ -214,52 +297,62 @@ const Index = () => {
 
       {/* Products Grid */}
       <div className="grid grid-cols-2 gap-4">
-        {filteredProducts.map((product) => (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            key={product.id}
-            className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
-            onClick={() => trackClick(product.id)}
-          >
-            <div className="relative h-40 overflow-hidden">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
-                <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
-              </div>
-              {product.discount > 0 && (
-                <div className="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm">
-                  {product.discount}% OFF
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              key={product.id}
+              className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
+              onClick={() => trackClick(product.id)}
+            >
+              <div className="relative h-40 overflow-hidden">
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
+                  <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
                 </div>
-              )}
-            </div>
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
-                <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
+                {product.discount > 0 && (
+                  <div className="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm">
+                    {product.discount}% OFF
+                  </div>
+                )}
               </div>
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
-                  {product.discount > 0 && (
-                    <span className="text-[10px] text-gray-300 line-through">₹{Math.round(product.price * 1.1)}</span>
-                  )}
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
+                  <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addToCart(product);
-                    showSuccess(`${product.name} added!`);
-                  }}
-                  className="bg-[#FF6B00] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:rotate-90 transition-transform shadow-lg shadow-orange-100"
-                >
-                  <Zap size={18} fill="currentColor" />
-                </button>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
+                    {product.discount > 0 && (
+                      <span className="text-[10px] text-gray-300 line-through">₹{Math.round(product.price * 1.1)}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product);
+                      showSuccess(`${product.name} added!`);
+                    }}
+                    className="bg-[#FF6B00] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:rotate-90 transition-transform shadow-lg shadow-orange-100"
+                  >
+                    <Zap size={18} fill="currentColor" />
+                  </button>
+                </div>
               </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="col-span-2 py-20 text-center space-y-4">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+              <Filter size={40} />
             </div>
-          </motion.div>
-        ))}
+            <p className="text-gray-500 font-bold">No products match your filters</p>
+            <button onClick={resetFilters} className="text-[#FF6B00] font-black text-sm underline">Clear All Filters</button>
+          </div>
+        )}
       </div>
     </div>
   );
