@@ -12,6 +12,7 @@ import Onboarding from "./pages/Onboarding";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
+import NotificationListener from "./components/NotificationListener";
 
 const queryClient = new QueryClient();
 
@@ -20,8 +21,9 @@ const App = () => (
     <AuthProvider>
       <CartProvider>
         <TooltipProvider>
-          <Toaster position="top-center" />
+          <Toaster position="top-center" expand={true} richColors />
           <BrowserRouter>
+            <NotificationListener />
             <div className="min-h-screen bg-[#FFFFFF] pb-20">
               <Routes>
                 <Route path="/" element={<Index />} />

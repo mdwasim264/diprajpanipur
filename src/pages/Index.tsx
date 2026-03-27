@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -71,7 +71,6 @@ const Index = () => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
 
-  // Behavior Tracking: Track clicks on products
   const trackClick = async (productId: string) => {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
@@ -85,7 +84,6 @@ const Index = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Smart Recommendation: Filter products based on user's favorite taste
   const recommendedProducts = profile?.taste 
     ? PRODUCTS.filter(p => p.taste === profile.taste).slice(0, 2)
     : PRODUCTS.slice(0, 2);
@@ -95,57 +93,91 @@ const Index = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-[#FF6B00] rounded-full flex items-center justify-center text-white font-bold">DP</div>
-          <h1 className="text-xl font-bold text-[#212121]">DIPRAJ PANI PURI</h1>
+          <div className="w-10 h-10 bg-[#FF6B00] rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-orange-200">DP</div>
+          <div>
+            <h1 className="text-lg font-black text-[#212121] leading-none">DIPRAJ</h1>
+            <p className="text-[10px] font-bold text-[#FF6B00] tracking-widest">PANI PURI</p>
+          </div>
         </div>
-        <button className="p-2 rounded-full bg-[#FFF3E0] text-[#FF6B00]">
-          <Heart size={24} />
-        </button>
+        <div className="flex gap-2">
+          <button className="p-2 rounded-full bg-gray-50 text-gray-400">
+            <Zap size={20} />
+          </button>
+          <button className="p-2 rounded-full bg-[#FFF3E0] text-[#FF6B00]">
+            <Heart size={20} />
+          </button>
+        </div>
       </div>
+
+      {/* Promo Banner */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-gradient-to-r from-[#FF6B00] to-[#FF9100] p-6 rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-orange-100"
+      >
+        <div className="relative z-10 space-y-1">
+          <p className="text-xs font-bold opacity-80 uppercase tracking-wider">Limited Offer</p>
+          <h2 className="text-2xl font-black">FREE DELIVERY</h2>
+          <p className="text-sm opacity-90">On all orders above ₹199</p>
+          <button className="mt-3 bg-white text-[#FF6B00] px-4 py-1.5 rounded-full text-xs font-bold">Order Now</button>
+        </div>
+        <Sparkles className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
+      </motion.div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
         <input
           type="text"
           placeholder="Search your favorite puri..."
-          className="w-full pl-10 pr-12 py-3 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-[#FF6B00] transition-all"
+          className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-[#FF6B00] transition-all text-sm font-medium"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FF6B00]">
-          <Filter size={20} />
+        <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[#FF6B00] bg-white p-1.5 rounded-lg shadow-sm">
+          <Filter size={16} />
         </button>
       </div>
 
       {/* Recommended Section */}
       {recommendedProducts.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={20} className="text-[#FF6B00]" />
-            <h2 className="text-lg font-bold">Recommended for You</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-orange-100 rounded-lg">
+                <Sparkles size={16} className="text-[#FF6B00]" />
+              </div>
+              <h2 className="text-lg font-bold">For You</h2>
+            </div>
+            <span className="text-xs font-bold text-[#FF6B00]">View All</span>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
             {recommendedProducts.map(product => (
               <div 
                 key={`rec-${product.id}`}
-                className="flex-shrink-0 w-64 bg-[#FFF3E0] p-3 rounded-3xl flex gap-3 items-center"
+                className="flex-shrink-0 w-72 bg-white border border-gray-100 p-3 rounded-3xl flex gap-4 items-center shadow-sm"
                 onClick={() => trackClick(product.id)}
               >
-                <img src={product.image} className="w-16 h-16 rounded-2xl object-cover" alt="" />
-                <div>
-                  <h3 className="font-bold text-xs line-clamp-1">{product.name}</h3>
-                  <p className="text-[#FF6B00] font-bold text-sm">₹{product.price}</p>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCart(product);
-                      showSuccess("Added to cart!");
-                    }}
-                    className="text-[10px] font-bold text-[#FF6B00] mt-1"
-                  >
-                    + Quick Add
-                  </button>
+                <img src={product.image} className="w-20 h-20 rounded-2xl object-cover shadow-md" alt="" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-sm line-clamp-1">{product.name}</h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                    <span className="text-[10px] font-bold text-gray-400">{product.rating}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[#FF6B00] font-black text-sm">₹{product.price}</p>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                        showSuccess("Added to cart!");
+                      }}
+                      className="bg-[#FF6B00] text-white p-1.5 rounded-xl"
+                    >
+                      <Zap size={14} fill="currentColor" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -155,11 +187,16 @@ const Index = () => {
 
       {/* Categories */}
       <div className="space-y-3">
-        <h2 className="text-lg font-bold">Categories</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-red-100 rounded-lg">
+            <Flame size={16} className="text-red-500" />
+          </div>
+          <h2 className="text-lg font-bold">Categories</h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
           <button
             onClick={() => setActiveCategory('all')}
-            className={`flex-shrink-0 px-6 py-2 rounded-full font-medium transition-all ${activeCategory === 'all' ? 'bg-[#FF6B00] text-white' : 'bg-[#FFF3E0] text-[#FF6B00]'}`}
+            className={`flex-shrink-0 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all ${activeCategory === 'all' ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 text-gray-500'}`}
           >
             All
           </button>
@@ -167,7 +204,7 @@ const Index = () => {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-6 py-2 rounded-full font-medium transition-all ${activeCategory === cat.id ? 'bg-[#FF6B00] text-white' : 'bg-[#FFF3E0] text-[#FF6B00]'}`}
+              className={`flex-shrink-0 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all ${activeCategory === cat.id ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 text-gray-500'}`}
             >
               {cat.name}
             </button>
@@ -182,40 +219,42 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             key={product.id}
-            className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+            className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
             onClick={() => trackClick(product.id)}
           >
-            <div className="relative h-32">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-              <div className="absolute top-2 left-2 bg-white/90 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-[#2E7D32]"></div>
-                <span className="text-[10px] font-bold text-[#2E7D32]">VEG</span>
+            <div className="relative h-40 overflow-hidden">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
+                <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
               </div>
-              <button className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full text-gray-400">
-                <Heart size={16} />
-              </button>
-            </div>
-            <div className="p-3 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="font-bold text-sm line-clamp-1">{product.name}</h3>
-                <div className="flex items-center gap-1 mt-1">
-                  <Star size={12} className="fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs text-gray-500">{product.rating}</span>
+              {product.discount > 0 && (
+                <div className="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm">
+                  {product.discount}% OFF
                 </div>
+              )}
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
               </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <span className="text-[#FF6B00] font-bold">₹{product.price}</span>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
+                  {product.discount > 0 && (
+                    <span className="text-[10px] text-gray-300 line-through">₹{Math.round(product.price * 1.1)}</span>
+                  )}
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     addToCart(product);
-                    showSuccess(`${product.name} added to cart!`);
+                    showSuccess(`${product.name} added!`);
                   }}
-                  className="bg-[#FF6B00] text-white p-1.5 rounded-xl hover:scale-105 transition-transform"
+                  className="bg-[#FF6B00] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:rotate-90 transition-transform shadow-lg shadow-orange-100"
                 >
-                  <span className="text-xs font-bold px-1">+ Add</span>
+                  <Zap size={18} fill="currentColor" />
                 </button>
               </div>
             </div>
