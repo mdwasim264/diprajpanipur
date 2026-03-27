@@ -1,0 +1,25 @@
+{
+  "short_name": "DiprajPP",
+  "name": "Dipraj Pani Puri",
+  "icons": [
+    {
+      "src": "placeholder.svg",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "placeholder.svg",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "placeholder.svg",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FF6B00",
+  "background_color": "#ffffff"
+}
