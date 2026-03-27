@@ -3,10 +3,20 @@ import { useCart } from '@/context/CartContext';
 import { Trash2, Plus, Minus, ChevronRight, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, total } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/profile');
+    } else {
+      navigate('/checkout');
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -86,6 +96,7 @@ const Cart = () => {
       </div>
 
       <button 
+        onClick={handleCheckout}
         className="w-full bg-[#FF6B00] text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
       >
         Checkout <ChevronRight size={20} />
