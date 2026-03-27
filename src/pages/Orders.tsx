@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { rtdb } from '@/lib/firebase';
 import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
 import { useAuth } from '@/context/AuthContext';
-import { ClipboardList, Clock, Package, Truck, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ClipboardList, Clock, Package, Truck, CheckCircle2, ChevronRight, Utensils } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const STATUS_ICONS: Record<string, any> = {
@@ -88,7 +88,7 @@ const Orders = () => {
                   <p className="text-[10px] text-gray-400 uppercase font-bold">Order #{order.id.slice(-6)}</p>
                   <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full flex items-center gap-1.5 ${STATUS_COLORS[order.status]}`}>
+                <div className={`px-3 py-1 rounded-full flex items-center gap-1.5 ${STATUS_COLORS[order.status] || 'text-gray-500 bg-gray-50'}`}>
                   <StatusIcon size={14} />
                   <span className="text-[10px] font-bold uppercase">{order.status}</span>
                 </div>

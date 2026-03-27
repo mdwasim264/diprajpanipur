@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { showSuccess } from '@/utils/toast';
 
 const CATEGORIES = [
-  { id: 'pani-puri', name: 'Pani Puri', icon: 'https://res.cloudinary.com/demo/image/upload/v1652345678/pani_puri_cat.png' },
-  { id: 'dahi-puri', name: 'Dahi Puri', icon: 'https://res.cloudinary.com/demo/image/upload/v1652345678/dahi_puri_cat.png' },
-  { id: 'sev-puri', name: 'Sev Puri', icon: 'https://res.cloudinary.com/demo/image/upload/v1652345678/sev_puri_cat.png' },
-  { id: 'combos', name: 'Special Combos', icon: 'https://res.cloudinary.com/demo/image/upload/v1652345678/combo_cat.png' },
+  { id: 'pani-puri', name: 'Pani Puri' },
+  { id: 'dahi-puri', name: 'Dahi Puri' },
+  { id: 'sev-puri', name: 'Sev Puri' },
+  { id: 'combos', name: 'Special Combos' },
 ];
 
 const PRODUCTS = [
@@ -21,6 +24,7 @@ const PRODUCTS = [
     category: 'pani-puri',
     image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80',
     isVeg: true,
+    taste: 'Spicy',
     description: 'Crispy puris filled with spicy tangy water and potato mash.'
   },
   {
@@ -32,6 +36,7 @@ const PRODUCTS = [
     category: 'dahi-puri',
     image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80',
     isVeg: true,
+    taste: 'Sweet',
     description: 'Sweet and tangy dahi puri topped with sev and pomegranate.'
   },
   {
@@ -43,19 +48,47 @@ const PRODUCTS = [
     category: 'combos',
     image: 'https://images.unsplash.com/photo-1626132646529-500637504079?auto=format&fit=crop&w=400&q=80',
     isVeg: true,
+    taste: 'Mix',
     description: 'Perfect for 4 people. Includes Pani Puri, Sev Puri and Dahi Puri.'
+  },
+  {
+    id: '4',
+    name: 'Spicy Garlic Pani Puri',
+    price: 50,
+    discount: 0,
+    rating: 4.6,
+    category: 'pani-puri',
+    image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=400&q=80',
+    isVeg: true,
+    taste: 'Spicy',
+    description: 'Extra spicy garlic water for the brave hearts.'
   }
 ];
 
 const Index = () => {
   const { addToCart } = useCart();
+  const { user, profile } = useAuth();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+
+  // Behavior Tracking: Track clicks on products
+  const trackClick = async (productId: string) => {
+    if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, {
+      [`clicks.${productId}`]: increment(1)
+    });
+  };
 
   const filteredProducts = PRODUCTS.filter(p => 
     (activeCategory === 'all' || p.category === activeCategory) &&
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Smart Recommendation: Filter products based on user's favorite taste
+  const recommendedProducts = profile?.taste 
+    ? PRODUCTS.filter(p => p.taste === profile.taste).slice(0, 2)
+    : PRODUCTS.slice(0, 2);
 
   return (
     <div className="p-4 space-y-6">
@@ -84,6 +117,41 @@ const Index = () => {
           <Filter size={20} />
         </button>
       </div>
+
+      {/* Recommended Section */}
+      {recommendedProducts.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} className="text-[#FF6B00]" />
+            <h2 className="text-lg font-bold">Recommended for You</h2>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+            {recommendedProducts.map(product => (
+              <div 
+                key={`rec-${product.id}`}
+                className="flex-shrink-0 w-64 bg-[#FFF3E0] p-3 rounded-3xl flex gap-3 items-center"
+                onClick={() => trackClick(product.id)}
+              >
+                <img src={product.image} className="w-16 h-16 rounded-2xl object-cover" alt="" />
+                <div>
+                  <h3 className="font-bold text-xs line-clamp-1">{product.name}</h3>
+                  <p className="text-[#FF6B00] font-bold text-sm">₹{product.price}</p>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product);
+                      showSuccess("Added to cart!");
+                    }}
+                    className="text-[10px] font-bold text-[#FF6B00] mt-1"
+                  >
+                    + Quick Add
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Categories */}
       <div className="space-y-3">
@@ -115,6 +183,7 @@ const Index = () => {
             animate={{ opacity: 1, y: 0 }}
             key={product.id}
             className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+            onClick={() => trackClick(product.id)}
           >
             <div className="relative h-32">
               <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -137,12 +206,10 @@ const Index = () => {
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <span className="text-[#FF6B00] font-bold">₹{product.price}</span>
-                  {product.discount > 0 && (
-                    <span className="text-[10px] text-gray-400 line-through ml-1">₹{product.price + 10}</span>
-                  )}
                 </div>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     addToCart(product);
                     showSuccess(`${product.name} added to cart!`);
                   }}
