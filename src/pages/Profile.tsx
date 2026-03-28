@@ -1,9 +1,11 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { User, MapPin, CreditCard, Bell, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { user, profile, logout, login } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -26,9 +28,9 @@ const Profile = () => {
   }
 
   const menuItems = [
-    { icon: MapPin, label: 'My Addresses', color: 'text-blue-500' },
-    { icon: CreditCard, label: 'Payment Methods', color: 'text-purple-500' },
-    { icon: Bell, label: 'Notifications', color: 'text-yellow-500' },
+    { icon: MapPin, label: 'My Addresses', color: 'text-blue-500', path: '/addresses' },
+    { icon: CreditCard, label: 'Payment Methods', color: 'text-purple-500', path: '/payments' },
+    { icon: Bell, label: 'Notifications', color: 'text-yellow-500', path: '/notifications' },
   ];
 
   return (
@@ -56,6 +58,7 @@ const Profile = () => {
         {menuItems.map((item, idx) => (
           <button 
             key={idx}
+            onClick={() => navigate(item.path)}
             className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-50 hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center gap-4">
