@@ -42,7 +42,11 @@ const Index = () => {
       },
       (err) => {
         console.error("Firestore Error:", err);
-        setError("Permission Denied. Please update Firebase Rules.");
+        if (err.code === 'permission-denied') {
+          setError("Firebase Rules are blocking access. Please update them in Firebase Console.");
+        } else {
+          setError("Failed to load products. Check your connection.");
+        }
         setLoading(false);
       }
     );
@@ -52,7 +56,7 @@ const Index = () => {
     const unsubscribeCats = onSnapshot(catQ, (snapshot) => {
       const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCategories(cats);
-    });
+    }, (err) => console.log("Categories error:", err));
 
     return () => {
       unsubscribe();
@@ -97,11 +101,28 @@ const Index = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <AlertCircle size={48} className="text-red-500" />
-        <h2 className="text-xl font-bold">Database Error</h2>
-        <p className="text-gray-500 text-sm">{error}</p>
-        <p className="text-xs bg-gray-100 p-3 rounded-lg">Go to Firebase Console > Firestore > Rules and set them to allow reads.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6 bg-red-50">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+          <AlertCircle size={40} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-red-800">Permission Denied</h2>
+          <p className="text-red-600 text-sm max-w-xs mx-auto">{error}</p>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm text-left text-xs font-mono overflow-auto max-w-sm">
+          <p className="font-bold mb-2 text-gray-400">// Copy this to Firebase Rules:</p>
+          <pre className="text-blue-600">
+{`match /products/{id} {
+  allow read: if true;
+}`}
+          </pre>
+        </div>
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-red-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg"
+        >
+          Retry After Updating Rules
+        </button>
       </div>
     );
   }
