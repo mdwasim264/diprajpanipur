@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, Plus } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,7 +16,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Link } from 'react-router-dom';
 
 const Index = () => {
   const { addToCart } = useCart();
@@ -66,10 +65,6 @@ const Index = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const recommendedProducts = profile?.taste 
-    ? products.filter(p => p.taste === profile.taste).slice(0, 2)
-    : products.slice(0, 2);
-
   const resetFilters = () => {
     setSelectedTaste(null);
     setActiveCategory('all');
@@ -99,11 +94,6 @@ const Index = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          {profile?.role === 'admin' && (
-            <Link to="/admin" className="p-2 rounded-full bg-black text-white">
-              <Plus size={20} />
-            </Link>
-          )}
           <button className="p-2 rounded-full bg-[#FFF3E0] text-[#FF6B00]">
             <Heart size={20} />
           </button>

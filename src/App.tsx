@@ -10,7 +10,6 @@ import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import Onboarding from "./pages/Onboarding";
 import Checkout from "./pages/Checkout";
-import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import NotificationListener from "./components/NotificationListener";
@@ -35,7 +34,6 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
