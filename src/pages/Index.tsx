@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, doc, updateDoc, increment } from 'firebase/firestore';
-import { showSuccess } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
 import {
   Sheet,
   SheetContent,
@@ -28,15 +28,24 @@ const Index = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Real-time Products Fetching
   useEffect(() => {
     const q = collection(db, "products");
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProducts(items);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProducts(items);
+        setLoading(false);
+        setError(null);
+      },
+      (err) => {
+        console.error("Firestore Error:", err);
+        setError("Permission Denied. Please update Firebase Rules.");
+        setLoading(false);
+      }
+    );
 
     // Fetch Categories
     const catQ = collection(db, "categories");
@@ -53,10 +62,14 @@ const Index = () => {
 
   const trackClick = async (productId: string) => {
     if (!user) return;
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, {
-      [`clicks.${productId}`]: increment(1)
-    });
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        [`clicks.${productId}`]: increment(1)
+      });
+    } catch (e) {
+      console.log("Tracking failed - likely permissions");
+    }
   };
 
   const filteredProducts = products.filter(p => 
@@ -78,6 +91,17 @@ const Index = () => {
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full"
         />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <AlertCircle size={48} className="text-red-500" />
+        <h2 className="text-xl font-bold">Database Error</h2>
+        <p className="text-gray-500 text-sm">{error}</p>
+        <p className="text-xs bg-gray-100 p-3 rounded-lg">Go to Firebase Console > Firestore > Rules and set them to allow reads.</p>
       </div>
     );
   }
