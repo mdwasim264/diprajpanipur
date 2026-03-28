@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc, updateDoc, increment } from 'firebase/firestore';
 import { showSuccess } from '@/utils/toast';
 import {
   Sheet,
@@ -16,66 +16,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-
-const CATEGORIES = [
-  { id: 'pani-puri', name: 'Pani Puri' },
-  { id: 'dahi-puri', name: 'Dahi Puri' },
-  { id: 'sev-puri', name: 'Sev Puri' },
-  { id: 'combos', name: 'Special Combos' },
-];
-
-const TASTES = ['Spicy', 'Sweet', 'Mix'];
-
-const PRODUCTS = [
-  {
-    id: '1',
-    name: 'Classic Pani Puri (6 Pcs)',
-    price: 40,
-    discount: 10,
-    rating: 4.8,
-    category: 'pani-puri',
-    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80',
-    isVeg: true,
-    taste: 'Spicy',
-    description: 'Crispy puris filled with spicy tangy water and potato mash.'
-  },
-  {
-    id: '2',
-    name: 'Special Dahi Puri',
-    price: 60,
-    discount: 5,
-    rating: 4.9,
-    category: 'dahi-puri',
-    image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80',
-    isVeg: true,
-    taste: 'Sweet',
-    description: 'Sweet and tangy dahi puri topped with sev and pomegranate.'
-  },
-  {
-    id: '3',
-    name: 'Family Combo Pack',
-    price: 250,
-    discount: 15,
-    rating: 4.7,
-    category: 'combos',
-    image: 'https://images.unsplash.com/photo-1626132646529-500637504079?auto=format&fit=crop&w=400&q=80',
-    isVeg: true,
-    taste: 'Mix',
-    description: 'Perfect for 4 people. Includes Pani Puri, Sev Puri and Dahi Puri.'
-  },
-  {
-    id: '4',
-    name: 'Spicy Garlic Pani Puri',
-    price: 50,
-    discount: 0,
-    rating: 4.6,
-    category: 'pani-puri',
-    image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=400&q=80',
-    isVeg: true,
-    taste: 'Spicy',
-    description: 'Extra spicy garlic water for the brave hearts.'
-  }
-];
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const { addToCart } = useCart();
@@ -84,6 +25,32 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedTaste, setSelectedTaste] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Real-time Products Fetching
+  useEffect(() => {
+    const q = collection(db, "products");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(items);
+      setLoading(false);
+    });
+
+    // Fetch Categories
+    const catQ = collection(db, "categories");
+    const unsubscribeCats = onSnapshot(catQ, (snapshot) => {
+      const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCategories(cats);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeCats();
+    };
+  }, []);
 
   const trackClick = async (productId: string) => {
     if (!user) return;
@@ -93,20 +60,32 @@ const Index = () => {
     });
   };
 
-  const filteredProducts = PRODUCTS.filter(p => 
+  const filteredProducts = products.filter(p => 
     (activeCategory === 'all' || p.category === activeCategory) &&
     (selectedTaste === null || p.taste === selectedTaste) &&
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const recommendedProducts = profile?.taste 
-    ? PRODUCTS.filter(p => p.taste === profile.taste).slice(0, 2)
-    : PRODUCTS.slice(0, 2);
+    ? products.filter(p => p.taste === profile.taste).slice(0, 2)
+    : products.slice(0, 2);
 
   const resetFilters = () => {
     setSelectedTaste(null);
     setActiveCategory('all');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6">
@@ -120,9 +99,11 @@ const Index = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="p-2 rounded-full bg-gray-50 text-gray-400">
-            <Zap size={20} />
-          </button>
+          {profile?.role === 'admin' && (
+            <Link to="/admin" className="p-2 rounded-full bg-black text-white">
+              <Plus size={20} />
+            </Link>
+          )}
           <button className="p-2 rounded-full bg-[#FFF3E0] text-[#FF6B00]">
             <Heart size={20} />
           </button>
@@ -170,11 +151,10 @@ const Index = () => {
             </SheetHeader>
             
             <div className="mt-8 space-y-8">
-              {/* Taste Filter */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Select Taste</h3>
                 <div className="flex flex-wrap gap-3">
-                  {TASTES.map((taste) => (
+                  {['Spicy', 'Sweet', 'Mix'].map((taste) => (
                     <button
                       key={taste}
                       onClick={() => setSelectedTaste(selectedTaste === taste ? null : taste)}
@@ -190,11 +170,10 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Category Filter (Quick Access) */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Category</h3>
                 <div className="flex flex-wrap gap-3">
-                  {CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(activeCategory === cat.id ? 'all' : cat.id)}
@@ -222,79 +201,6 @@ const Index = () => {
         </Sheet>
       </div>
 
-      {/* Recommended Section */}
-      {recommendedProducts.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-orange-100 rounded-lg">
-                <Sparkles size={16} className="text-[#FF6B00]" />
-              </div>
-              <h2 className="text-lg font-bold">For You</h2>
-            </div>
-            <span className="text-xs font-bold text-[#FF6B00]">View All</span>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-            {recommendedProducts.map(product => (
-              <div 
-                key={`rec-${product.id}`}
-                className="flex-shrink-0 w-72 bg-white border border-gray-100 p-3 rounded-3xl flex gap-4 items-center shadow-sm"
-                onClick={() => trackClick(product.id)}
-              >
-                <img src={product.image} className="w-20 h-20 rounded-2xl object-cover shadow-md" alt="" />
-                <div className="flex-1">
-                  <h3 className="font-bold text-sm line-clamp-1">{product.name}</h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star size={12} className="fill-yellow-400 text-yellow-400" />
-                    <span className="text-[10px] font-bold text-gray-400">{product.rating}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-[#FF6B00] font-black text-sm">₹{product.price}</p>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(product);
-                        showSuccess("Added to cart!");
-                      }}
-                      className="bg-[#FF6B00] text-white p-1.5 rounded-xl"
-                    >
-                      <Zap size={14} fill="currentColor" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Categories Quick Bar */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-red-100 rounded-lg">
-            <Flame size={16} className="text-red-500" />
-          </div>
-          <h2 className="text-lg font-bold">Categories</h2>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-          <button
-            onClick={() => setActiveCategory('all')}
-            className={`flex-shrink-0 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all ${activeCategory === 'all' ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 text-gray-500'}`}
-          >
-            All
-          </button>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-6 py-2.5 rounded-2xl font-bold text-sm transition-all ${activeCategory === cat.id ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 text-gray-500'}`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Products Grid */}
       <div className="grid grid-cols-2 gap-4">
         {filteredProducts.length > 0 ? (
@@ -312,11 +218,6 @@ const Index = () => {
                   <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
                   <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
                 </div>
-                {product.discount > 0 && (
-                  <div className="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-sm">
-                    {product.discount}% OFF
-                  </div>
-                )}
               </div>
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
@@ -324,12 +225,7 @@ const Index = () => {
                   <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
-                    {product.discount > 0 && (
-                      <span className="text-[10px] text-gray-300 line-through">₹{Math.round(product.price * 1.1)}</span>
-                    )}
-                  </div>
+                  <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -349,7 +245,7 @@ const Index = () => {
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
               <Filter size={40} />
             </div>
-            <p className="text-gray-500 font-bold">No products match your filters</p>
+            <p className="text-gray-500 font-bold">No products found</p>
             <button onClick={resetFilters} className="text-[#FF6B00] font-black text-sm underline">Clear All Filters</button>
           </div>
         )}
