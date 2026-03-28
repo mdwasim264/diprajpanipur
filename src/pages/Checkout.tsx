@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { rtdb, db } from '@/lib/firebase';
 import { ref, push, set } from 'firebase/database';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { MapPin, Truck, ShoppingBag, Utensils, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -88,7 +88,6 @@ const Checkout = () => {
                 {[
                   { id: 'delivery', label: 'Delivery', icon: Truck, desc: 'Get it at your doorstep' },
                   { id: 'pickup', label: 'Pickup', icon: ShoppingBag, desc: 'Collect from our store' },
-                  { id: 'dine-in', label: 'Dine-in', icon: Utensils, desc: 'Eat at our place' },
                 ].map((type) => (
                   <button
                     key={type.id}
