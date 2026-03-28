@@ -136,19 +136,19 @@ const Index = () => {
       </div>
 
       {/* Dynamic Banners */}
-      <div className="overflow-x-auto no-scrollbar flex gap-4 snap-x">
+      <div className="overflow-x-auto no-scrollbar flex gap-4 snap-x px-1 pb-2">
         {banners.length > 0 ? (
           banners.map((banner) => (
             <motion.div 
               key={banner.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="min-w-[85%] snap-center bg-gray-100 h-44 rounded-[2rem] relative overflow-hidden shadow-xl shadow-orange-50"
+              className="min-w-[90%] snap-center bg-gray-100 aspect-[21/9] rounded-[2rem] relative overflow-hidden shadow-xl shadow-orange-50/50"
             >
               <img src={banner.image} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-6 flex flex-col justify-end text-white">
-                <h2 className="text-xl font-black leading-tight">{banner.title}</h2>
-                <p className="text-xs opacity-80">{banner.subtitle}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-6 flex flex-col justify-end text-white">
+                <h2 className="text-xl font-black leading-tight drop-shadow-md">{banner.title}</h2>
+                <p className="text-xs opacity-90 font-medium drop-shadow-sm">{banner.subtitle}</p>
               </div>
             </motion.div>
           ))
@@ -156,13 +156,15 @@ const Index = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9100] p-6 rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-orange-100"
+            className="min-w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9100] aspect-[21/9] rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-orange-100"
           >
-            <div className="relative z-10 space-y-1">
-              <p className="text-xs font-bold opacity-80 uppercase tracking-wider">Limited Offer</p>
+            <div className="relative z-10 p-6 h-full flex flex-col justify-center space-y-1">
+              <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Limited Offer</p>
               <h2 className="text-2xl font-black">FREE DELIVERY</h2>
-              <p className="text-sm opacity-90">On all orders above ₹199</p>
-              <button className="mt-3 bg-white text-[#FF6B00] px-4 py-1.5 rounded-full text-xs font-bold">Order Now</button>
+              <p className="text-xs opacity-90">On all orders above ₹199</p>
+              <div className="pt-2">
+                <button className="bg-white text-[#FF6B00] px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg">Order Now</button>
+              </div>
             </div>
             <Sparkles className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
           </motion.div>
