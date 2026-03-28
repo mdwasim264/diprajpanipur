@@ -4,8 +4,8 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { rtdb, db } from '@/lib/firebase';
 import { ref, push, set } from 'firebase/database';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { doc, updateDoc, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
+import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2, Ticket, Tag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -16,6 +16,10 @@ const Checkout = () => {
   
   const [step, setStep] = useState(1);
   const [orderType, setOrderType] = useState('delivery');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  
   const [address, setAddress] = useState({
     name: user?.displayName || '',
     phone: '',
@@ -24,6 +28,37 @@ const Checkout = () => {
     state: '',
     fullAddress: ''
   });
+
+  const finalTotal = Math.max(0, total - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+
+    try {
+      const q = query(collection(db, "coupons"), where("code", "==", couponCode.toUpperCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        showError("Invalid coupon code");
+        return;
+      }
+
+      const couponData = querySnapshot.docs[0].data();
+      const discount = (total * (couponData.discount / 100));
+      
+      setAppliedCoupon({ id: querySnapshot.docs[0].id, ...couponData });
+      setDiscountAmount(discount);
+      showSuccess(`Coupon applied! You saved ₹${discount.toFixed(2)}`);
+    } catch (error) {
+      showError("Error applying coupon");
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
+    setCouponCode('');
+  };
 
   const handlePlaceOrder = async () => {
     if (!user) {
@@ -36,7 +71,10 @@ const Checkout = () => {
       const orderData = {
         userId: user.uid,
         items: cart,
-        total: total,
+        subtotal: total,
+        discount: discountAmount,
+        couponCode: appliedCoupon?.code || null,
+        total: finalTotal,
         orderType,
         address: orderType === 'delivery' ? address : null,
         status: 'Pending',
@@ -172,7 +210,47 @@ const Checkout = () => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <h2 className="text-lg font-bold">Payment Method</h2>
+              <h2 className="text-lg font-bold">Payment & Offers</h2>
+              
+              {/* Coupon Section */}
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Apply Coupon</p>
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input 
+                        placeholder="Enter Code" 
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm font-bold uppercase"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value)}
+                      />
+                    </div>
+                    <button 
+                      onClick={handleApplyCoupon}
+                      className="bg-[#FF6B00] text-white px-6 rounded-xl font-bold text-sm"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-green-50 border border-green-100 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
+                        <Ticket size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-green-700 uppercase">{appliedCoupon.code} Applied!</p>
+                        <p className="text-[10px] text-green-600">You saved ₹{discountAmount.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <button onClick={removeCoupon} className="text-green-700 p-1">
+                      <X size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="p-4 rounded-2xl border-2 border-[#FF6B00] bg-[#FFF3E0] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-[#FF6B00] text-white rounded-lg">
@@ -180,23 +258,28 @@ const Checkout = () => {
                   </div>
                   <span className="font-bold">Cash on Delivery (COD)</span>
                 </div>
-                <span className="text-[#FF6B00] font-bold">₹{total}</span>
+                <span className="text-[#FF6B00] font-bold">₹{finalTotal.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-gray-500 text-center italic">Currently we only accept Cash on Delivery for the best experience.</p>
               
               <div className="bg-gray-50 p-4 rounded-2xl space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Order Total</span>
-                  <span>₹{total}</span>
+                  <span className="text-gray-500">Order Total</span>
+                  <span>₹{total.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 font-bold">
+                    <span>Coupon Discount</span>
+                    <span>-₹{discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-green-600 font-bold">
                   <span>Delivery Fee</span>
                   <span>FREE</span>
                 </div>
                 <div className="h-px bg-gray-200 my-2" />
-                <div className="flex justify-between font-bold">
+                <div className="flex justify-between font-bold text-lg">
                   <span>Amount to Pay</span>
-                  <span className="text-[#FF6B00]">₹{total}</span>
+                  <span className="text-[#FF6B00]">₹{finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
