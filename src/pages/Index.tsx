@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -28,6 +28,7 @@ const Index = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,12 +62,25 @@ const Index = () => {
       setBanners(bns);
     });
 
+    // Fetch Coupons
+    const couponQ = collection(db, "coupons");
+    const unsubscribeCoupons = onSnapshot(couponQ, (snapshot) => {
+      const cpns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCoupons(cpns);
+    });
+
     return () => {
       unsubscribeProducts();
       unsubscribeCats();
       unsubscribeBanners();
+      unsubscribeCoupons();
     };
   }, []);
+
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    showSuccess(`Code ${code} copied!`);
+  };
 
   const trackClick = async (productId: string) => {
     if (!user) return;
@@ -154,6 +168,37 @@ const Index = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Coupons Section */}
+      {coupons.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-black text-gray-800">Special Offers</h2>
+          </div>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+            {coupons.map((coupon) => (
+              <motion.div 
+                key={coupon.id}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => copyToClipboard(coupon.code)}
+                className="flex-shrink-0 w-64 bg-white border-2 border-dashed border-orange-200 rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group cursor-pointer"
+              >
+                <div className="w-12 h-12 bg-[#FFF3E0] rounded-xl flex items-center justify-center text-[#FF6B00]">
+                  <Ticket size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Use Code</p>
+                  <h3 className="font-black text-[#FF6B00] text-lg">{coupon.code}</h3>
+                  <p className="text-[10px] text-gray-500 font-medium">{coupon.description || `Get ${coupon.discount}% OFF`}</p>
+                </div>
+                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Copy size={14} className="text-gray-300" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Search Bar & Filter */}
       <div className="relative flex gap-2">
