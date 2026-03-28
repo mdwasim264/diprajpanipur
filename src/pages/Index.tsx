@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -27,26 +27,22 @@ const Index = () => {
   
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Real-time Products Fetching
   useEffect(() => {
+    // Fetch Products
     const q = collection(db, "products");
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribeProducts = onSnapshot(q, 
       (snapshot) => {
         const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProducts(items);
         setLoading(false);
-        setError(null);
       },
       (err) => {
-        console.error("Firestore Error:", err);
-        if (err.code === 'permission-denied') {
-          setError("Firebase Rules are blocking access. Please update them in Firebase Console.");
-        } else {
-          setError("Failed to load products. Check your connection.");
-        }
+        console.error("Products Error:", err);
+        setError("Failed to load products.");
         setLoading(false);
       }
     );
@@ -56,11 +52,19 @@ const Index = () => {
     const unsubscribeCats = onSnapshot(catQ, (snapshot) => {
       const cats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCategories(cats);
-    }, (err) => console.log("Categories error:", err));
+    });
+
+    // Fetch Banners
+    const bannerQ = collection(db, "banners");
+    const unsubscribeBanners = onSnapshot(bannerQ, (snapshot) => {
+      const bns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBanners(bns);
+    });
 
     return () => {
-      unsubscribe();
+      unsubscribeProducts();
       unsubscribeCats();
+      unsubscribeBanners();
     };
   }, []);
 
@@ -72,7 +76,7 @@ const Index = () => {
         [`clicks.${productId}`]: increment(1)
       });
     } catch (e) {
-      console.log("Tracking failed - likely permissions");
+      console.log("Tracking failed");
     }
   };
 
@@ -99,34 +103,6 @@ const Index = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6 bg-red-50">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-          <AlertCircle size={40} />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold text-red-800">Permission Denied</h2>
-          <p className="text-red-600 text-sm max-w-xs mx-auto">{error}</p>
-        </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm text-left text-xs font-mono overflow-auto max-w-sm">
-          <p className="font-bold mb-2 text-gray-400">// Copy this to Firebase Rules:</p>
-          <pre className="text-blue-600">
-{`match /products/{id} {
-  allow read: if true;
-}`}
-          </pre>
-        </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="bg-red-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg"
-        >
-          Retry After Updating Rules
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
@@ -145,20 +121,39 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Promo Banner */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-gradient-to-r from-[#FF6B00] to-[#FF9100] p-6 rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-orange-100"
-      >
-        <div className="relative z-10 space-y-1">
-          <p className="text-xs font-bold opacity-80 uppercase tracking-wider">Limited Offer</p>
-          <h2 className="text-2xl font-black">FREE DELIVERY</h2>
-          <p className="text-sm opacity-90">On all orders above ₹199</p>
-          <button className="mt-3 bg-white text-[#FF6B00] px-4 py-1.5 rounded-full text-xs font-bold">Order Now</button>
-        </div>
-        <Sparkles className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
-      </motion.div>
+      {/* Dynamic Banners */}
+      <div className="overflow-x-auto no-scrollbar flex gap-4 snap-x">
+        {banners.length > 0 ? (
+          banners.map((banner) => (
+            <motion.div 
+              key={banner.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="min-w-[85%] snap-center bg-gray-100 h-44 rounded-[2rem] relative overflow-hidden shadow-xl shadow-orange-50"
+            >
+              <img src={banner.image} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-6 flex flex-col justify-end text-white">
+                <h2 className="text-xl font-black leading-tight">{banner.title}</h2>
+                <p className="text-xs opacity-80">{banner.subtitle}</p>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full bg-gradient-to-r from-[#FF6B00] to-[#FF9100] p-6 rounded-[2rem] text-white relative overflow-hidden shadow-xl shadow-orange-100"
+          >
+            <div className="relative z-10 space-y-1">
+              <p className="text-xs font-bold opacity-80 uppercase tracking-wider">Limited Offer</p>
+              <h2 className="text-2xl font-black">FREE DELIVERY</h2>
+              <p className="text-sm opacity-90">On all orders above ₹199</p>
+              <button className="mt-3 bg-white text-[#FF6B00] px-4 py-1.5 rounded-full text-xs font-bold">Order Now</button>
+            </div>
+            <Sparkles className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
+          </motion.div>
+        )}
+      </div>
 
       {/* Search Bar & Filter */}
       <div className="relative flex gap-2">
@@ -236,54 +231,88 @@ const Index = () => {
         </Sheet>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              key={product.id}
-              className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
-              onClick={() => trackClick(product.id)}
-            >
-              <div className="relative h-40 overflow-hidden">
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
-                  <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
-                </div>
-              </div>
-              <div className="p-4 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
-                  <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCart(product);
-                      showSuccess(`${product.name} added!`);
-                    }}
-                    className="bg-[#FF6B00] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:rotate-90 transition-transform shadow-lg shadow-orange-100"
-                  >
-                    <Zap size={18} fill="currentColor" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))
-        ) : (
-          <div className="col-span-2 py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
-              <Filter size={40} />
+      {/* Categories Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-black text-gray-800">Categories</h2>
+          <button className="text-[#FF6B00] text-xs font-bold flex items-center gap-1">See All <ChevronRight size={14} /></button>
+        </div>
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+          <button 
+            onClick={() => setActiveCategory('all')}
+            className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all ${activeCategory === 'all' ? 'scale-110' : 'opacity-60'}`}
+          >
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${activeCategory === 'all' ? 'border-[#FF6B00] bg-[#FFF3E0]' : 'border-gray-100 bg-gray-50'}`}>
+              <Sparkles size={24} className={activeCategory === 'all' ? 'text-[#FF6B00]' : 'text-gray-400'} />
             </div>
-            <p className="text-gray-500 font-bold">No products found</p>
-            <button onClick={resetFilters} className="text-[#FF6B00] font-black text-sm underline">Clear All Filters</button>
-          </div>
-        )}
+            <span className="text-[10px] font-bold uppercase tracking-wider">All</span>
+          </button>
+          {categories.map((cat) => (
+            <button 
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all ${activeCategory === cat.id ? 'scale-110' : 'opacity-60'}`}
+            >
+              <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${activeCategory === cat.id ? 'border-[#FF6B00]' : 'border-gray-100'}`}>
+                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{cat.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Products Grid */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-black text-gray-800">Popular Now</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={product.id}
+                className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
+                onClick={() => trackClick(product.id)}
+              >
+                <div className="relative h-40 overflow-hidden">
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
+                    <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
+                  </div>
+                </div>
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
+                    <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                        showSuccess(`${product.name} added!`);
+                      }}
+                      className="bg-[#FF6B00] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:rotate-90 transition-transform shadow-lg shadow-orange-100"
+                    >
+                      <Zap size={18} fill="currentColor" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-2 py-20 text-center space-y-4">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+                <Filter size={40} />
+              </div>
+              <p className="text-gray-500 font-bold">No products found</p>
+              <button onClick={resetFilters} className="text-[#FF6B00] font-black text-sm underline">Clear All Filters</button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
