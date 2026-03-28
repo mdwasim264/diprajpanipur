@@ -14,8 +14,12 @@ const Addresses = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [newAddress, setNewAddress] = useState({
     type: 'Home',
-    fullAddress: '',
-    landmark: ''
+    houseNo: '',
+    area: '',
+    landmark: '',
+    city: '',
+    state: '',
+    pincode: ''
   });
 
   useEffect(() => {
@@ -31,16 +35,34 @@ const Addresses = () => {
   }, [user]);
 
   const handleAdd = async () => {
-    if (!newAddress.fullAddress) return showError("Please enter address");
+    if (!newAddress.houseNo || !newAddress.area || !newAddress.city || !newAddress.pincode) {
+      return showError("Please fill all required fields");
+    }
+    
     try {
       const userRef = doc(db, "users", user.uid);
-      const addressData = { ...newAddress, id: Date.now().toString() };
+      const fullAddressString = `${newAddress.houseNo}, ${newAddress.area}, ${newAddress.city}, ${newAddress.state} - ${newAddress.pincode}`;
+      const addressData = { 
+        ...newAddress, 
+        fullAddress: fullAddressString,
+        id: Date.now().toString() 
+      };
+      
       await updateDoc(userRef, {
         addresses: arrayUnion(addressData)
       });
+      
       setAddresses([...addresses, addressData]);
       setIsAdding(false);
-      setNewAddress({ type: 'Home', fullAddress: '', landmark: '' });
+      setNewAddress({ 
+        type: 'Home', 
+        houseNo: '', 
+        area: '', 
+        landmark: '', 
+        city: '', 
+        state: '', 
+        pincode: '' 
+      });
       showSuccess("Address added!");
     } catch (e) {
       showError("Failed to add address");
@@ -100,19 +122,50 @@ const Addresses = () => {
                   </button>
                 ))}
               </div>
-              <textarea 
-                placeholder="Full Address" 
-                className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
-                value={newAddress.fullAddress}
-                onChange={e => setNewAddress({...newAddress, fullAddress: e.target.value})}
-              />
-              <input 
-                placeholder="Landmark (Optional)" 
-                className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
-                value={newAddress.landmark}
-                onChange={e => setNewAddress({...newAddress, landmark: e.target.value})}
-              />
-              <div className="flex gap-2">
+              
+              <div className="space-y-3">
+                <input 
+                  placeholder="House No / Flat No" 
+                  className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                  value={newAddress.houseNo}
+                  onChange={e => setNewAddress({...newAddress, houseNo: e.target.value})}
+                />
+                <input 
+                  placeholder="Area / Street / Colony" 
+                  className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                  value={newAddress.area}
+                  onChange={e => setNewAddress({...newAddress, area: e.target.value})}
+                />
+                <input 
+                  placeholder="Landmark (Optional)" 
+                  className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                  value={newAddress.landmark}
+                  onChange={e => setNewAddress({...newAddress, landmark: e.target.value})}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input 
+                    placeholder="City" 
+                    className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                    value={newAddress.city}
+                    onChange={e => setNewAddress({...newAddress, city: e.target.value})}
+                  />
+                  <input 
+                    placeholder="State" 
+                    className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                    value={newAddress.state}
+                    onChange={e => setNewAddress({...newAddress, state: e.target.value})}
+                  />
+                </div>
+                <input 
+                  placeholder="Pincode" 
+                  type="number"
+                  className="w-full p-3 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                  value={newAddress.pincode}
+                  onChange={e => setNewAddress({...newAddress, pincode: e.target.value})}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <button onClick={() => setIsAdding(false)} className="flex-1 py-3 text-gray-500 font-bold">Cancel</button>
                 <button onClick={handleAdd} className="flex-1 py-3 bg-[#FF6B00] text-white rounded-xl font-bold">Save Address</button>
               </div>
