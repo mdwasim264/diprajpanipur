@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc, updateDoc, increment, orderBy, limit } from 'firebase/firestore';
 import { showSuccess, showError } from '@/utils/toast';
 import {
   Sheet,
@@ -29,6 +29,7 @@ const Index = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,11 +70,24 @@ const Index = () => {
       setCoupons(cpns);
     });
 
+    // Fetch Top Customers (Leaderboard)
+    const usersQ = query(
+      collection(db, "users"), 
+      where("totalOrders", ">", 0),
+      orderBy("totalOrders", "desc"),
+      limit(10)
+    );
+    const unsubscribeUsers = onSnapshot(usersQ, (snapshot) => {
+      const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTopCustomers(users);
+    });
+
     return () => {
       unsubscribeProducts();
       unsubscribeCats();
       unsubscribeBanners();
       unsubscribeCoupons();
+      unsubscribeUsers();
     };
   }, []);
 
@@ -170,6 +184,51 @@ const Index = () => {
           </motion.div>
         )}
       </div>
+
+      {/* Top Foodies Section */}
+      {topCustomers.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Crown className="text-yellow-500" size={20} />
+              <h2 className="text-lg font-black text-gray-800">Top Foodies</h2>
+            </div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Wall of Fame</span>
+          </div>
+          <div className="flex gap-6 overflow-x-auto no-scrollbar pb-2 px-1">
+            {topCustomers.map((customer, idx) => (
+              <motion.div 
+                key={customer.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="flex flex-col items-center gap-2 flex-shrink-0"
+              >
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-tr from-yellow-400 to-orange-500">
+                    <img 
+                      src={customer.photoURL || 'https://via.placeholder.com/100'} 
+                      alt={customer.displayName} 
+                      className="w-full h-full rounded-full object-cover border-2 border-white"
+                    />
+                  </div>
+                  {idx === 0 && (
+                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-white p-1 rounded-full shadow-lg">
+                      <Trophy size={12} />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded-full shadow-sm border border-gray-100">
+                    <span className="text-[8px] font-black text-[#FF6B00]">{customer.totalOrders} Orders</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-gray-600 max-w-[70px] truncate text-center">
+                  {customer.displayName?.split(' ')[0]}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Coupons Section */}
       {coupons.length > 0 && (

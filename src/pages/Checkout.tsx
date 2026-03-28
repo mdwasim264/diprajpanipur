@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { rtdb, db } from '@/lib/firebase';
 import { ref, push, set } from 'firebase/database';
-import { doc, updateDoc, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, collection, query, where, getDocs, increment } from 'firebase/firestore';
 import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2, Ticket, Tag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showSuccess, showError } from '@/utils/toast';
@@ -91,7 +91,8 @@ const Checkout = () => {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         orderHistory: arrayUnion(newOrderRef.key),
-        lastOrderAt: new Date().toISOString()
+        lastOrderAt: new Date().toISOString(),
+        totalOrders: increment(1) // Increment total orders for leaderboard
       });
 
       showSuccess("Order placed successfully!");
