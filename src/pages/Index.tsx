@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
@@ -383,18 +383,42 @@ const Index = () => {
               >
                 <div className="relative h-40 overflow-hidden">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  
+                  {/* Veg Badge */}
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></div>
                     <span className="text-[8px] font-black text-[#2E7D32] uppercase tracking-tighter">Veg</span>
                   </div>
+
+                  {/* Discount Badge */}
+                  {product.discount > 0 && (
+                    <div className="absolute top-3 right-3 bg-[#FF6B00] text-white px-2 py-1 rounded-lg shadow-lg">
+                      <span className="text-[8px] font-black uppercase">{product.discount}% OFF</span>
+                    </div>
+                  )}
                 </div>
+
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
+                    {/* Category Label */}
+                    <div className="flex items-center gap-1 mb-1">
+                      <Tag size={10} className="text-[#FF6B00]" />
+                      <span className="text-[8px] font-bold text-[#FF6B00] uppercase tracking-widest">
+                        {categories.find(c => c.id === product.category)?.name || 'General'}
+                      </span>
+                    </div>
+                    
                     <h3 className="font-bold text-sm line-clamp-1 text-gray-800">{product.name}</h3>
                     <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product.description}</p>
                   </div>
+
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
+                    <div className="flex flex-col">
+                      {product.discount > 0 && (
+                        <span className="text-[10px] text-gray-400 line-through leading-none">₹{Math.round(product.price / (1 - product.discount/100))}</span>
+                      )}
+                      <span className="text-[#FF6B00] font-black text-base">₹{product.price}</span>
+                    </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
