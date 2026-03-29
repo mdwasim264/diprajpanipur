@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const { addToCart } = useCart();
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedTaste, setSelectedTaste] = useState<string | null>(null);
@@ -378,8 +380,11 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 key={product.id}
-                className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group"
-                onClick={() => trackClick(product.id)}
+                className="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group cursor-pointer"
+                onClick={() => {
+                  trackClick(product.id);
+                  navigate(`/product/${product.id}`);
+                }}
               >
                 <div className="relative h-40 overflow-hidden">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />

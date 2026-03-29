@@ -13,6 +13,7 @@ import Checkout from "./pages/Checkout";
 import Addresses from "./pages/Addresses";
 import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
+import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import NotificationListener from "./components/NotificationListener";
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/addresses" element={<Addresses />} />
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
