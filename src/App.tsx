@@ -1,4 +1,5 @@
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -23,33 +24,35 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster position="top-center" expand={true} richColors />
-          <BrowserRouter>
-            <NotificationListener />
-            <PWAInstallPrompt />
-            <div className="min-h-screen bg-[#FFFFFF] pb-20">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/addresses" element={<Addresses />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/product/:id" element={<ProductDetails />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomNav />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster position="top-center" expand={true} richColors closeButton />
+            <BrowserRouter>
+              <NotificationListener />
+              <PWAInstallPrompt />
+              <div className="min-h-screen bg-[#FFFFFF] pb-20">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/addresses" element={<Addresses />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/product/:id" element={<ProductDetails />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <BottomNav />
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
