@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { rtdb, db } from '@/lib/firebase';
 import { ref, push, set } from 'firebase/database';
-import { doc, updateDoc, arrayUnion, collection, query, where, getDocs, increment } from 'firebase/firestore';
-import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2, Ticket, Tag, X } from 'lucide-react';
+import { doc, updateDoc, arrayUnion, collection, query, where, getDocs, increment, getDoc } from 'firebase/firestore';
+import { MapPin, Truck, ShoppingBag, ChevronLeft, CheckCircle2, Ticket, Tag, X, Home, Briefcase, Map, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -19,6 +19,9 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showManualForm, setShowManualForm] = useState(false);
   
   const [address, setAddress] = useState({
     name: user?.displayName || '',
@@ -28,6 +31,29 @@ const Checkout = () => {
     state: '',
     fullAddress: ''
   });
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchSavedAddresses = async () => {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSavedAddresses(data.addresses || []);
+        if (data.addresses && data.addresses.length > 0) {
+          setSelectedAddressId(data.addresses[0].id);
+          setAddress({
+            name: user.displayName || '',
+            phone: '', // Phone might need to be fetched if stored
+            ...data.addresses[0]
+          });
+        } else {
+          setShowManualForm(true);
+        }
+      }
+    };
+    fetchSavedAddresses();
+  }, [user]);
 
   const finalTotal = Math.max(0, total - discountAmount);
 
@@ -60,10 +86,25 @@ const Checkout = () => {
     setCouponCode('');
   };
 
+  const handleSelectSavedAddress = (addr: any) => {
+    setSelectedAddressId(addr.id);
+    setAddress({
+      name: user?.displayName || '',
+      phone: address.phone, // Keep current phone if entered
+      ...addr
+    });
+    setShowManualForm(false);
+  };
+
   const handlePlaceOrder = async () => {
     if (!user) {
       showError("Please login to place order");
       navigate('/profile');
+      return;
+    }
+
+    if (orderType === 'delivery' && !address.fullAddress) {
+      showError("Please select or enter a delivery address");
       return;
     }
 
@@ -82,22 +123,20 @@ const Checkout = () => {
         createdAt: new Date().toISOString(),
       };
 
-      // Save to Realtime Database for live tracking
       const ordersRef = ref(rtdb, 'orders');
       const newOrderRef = push(ordersRef);
       await set(newOrderRef, orderData);
 
-      // Track behavior in Firestore (Analytics)
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         orderHistory: arrayUnion(newOrderRef.key),
         lastOrderAt: new Date().toISOString(),
-        totalOrders: increment(1) // Increment total orders for leaderboard
+        totalOrders: increment(1)
       });
 
       showSuccess("Order placed successfully!");
       clearCart();
-      setStep(4); // Success step
+      setStep(4);
     } catch (error) {
       showError("Failed to place order. Try again.");
     }
@@ -105,7 +144,6 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-white pb-24">
-      {/* Header */}
       <div className="p-4 flex items-center gap-4 border-b">
         <button onClick={() => step > 1 && step < 4 ? setStep(step - 1) : navigate('/cart')}>
           <ChevronLeft size={24} />
@@ -157,49 +195,101 @@ const Checkout = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
+              className="space-y-6"
             >
               <h2 className="text-lg font-bold">Delivery Address</h2>
-              <div className="space-y-3">
-                <input 
-                  placeholder="Full Name" 
-                  className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00]"
-                  value={address.name}
-                  onChange={e => setAddress({...address, name: e.target.value})}
-                />
-                <input 
-                  placeholder="Phone Number" 
-                  className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00]"
-                  value={address.phone}
-                  onChange={e => setAddress({...address, phone: e.target.value})}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <input 
-                    placeholder="Pincode" 
-                    className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00]"
-                    value={address.pincode}
-                    onChange={e => setAddress({...address, pincode: e.target.value})}
-                  />
-                  <input 
-                    placeholder="City" 
-                    className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00]"
-                    value={address.city}
-                    onChange={e => setAddress({...address, city: e.target.value})}
-                  />
+              
+              {savedAddresses.length > 0 && !showManualForm && (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Saved Addresses</p>
+                  <div className="space-y-3">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        key={addr.id}
+                        onClick={() => handleSelectSavedAddress(addr)}
+                        className={`w-full p-4 rounded-2xl border-2 text-left flex gap-3 transition-all ${selectedAddressId === addr.id ? 'border-[#FF6B00] bg-[#FFF3E0]' : 'border-gray-100'}`}
+                      >
+                        <div className={`p-2 rounded-xl h-fit ${selectedAddressId === addr.id ? 'bg-[#FF6B00] text-white' : 'bg-gray-50 text-gray-400'}`}>
+                          {addr.type === 'Home' ? <Home size={18} /> : addr.type === 'Work' ? <Briefcase size={18} /> : <Map size={18} />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-sm">{addr.type}</p>
+                          <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{addr.fullAddress}</p>
+                        </div>
+                        {selectedAddressId === addr.id && <CheckCircle2 size={20} className="text-[#FF6B00]" />}
+                      </button>
+                    ))}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowManualForm(true);
+                      setSelectedAddressId(null);
+                      setAddress({ name: user?.displayName || '', phone: '', pincode: '', city: '', state: '', fullAddress: '' });
+                    }}
+                    className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-xs font-bold flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} /> Use a different address
+                  </button>
                 </div>
-                <textarea 
-                  placeholder="Full Address (House No, Street, Landmark)" 
-                  rows={3}
-                  className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00]"
-                  value={address.fullAddress}
-                  onChange={e => setAddress({...address, fullAddress: e.target.value})}
-                />
-              </div>
+              )}
+
+              {(showManualForm || savedAddresses.length === 0) && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Enter New Address</p>
+                    {savedAddresses.length > 0 && (
+                      <button onClick={() => setShowManualForm(false)} className="text-[10px] font-bold text-[#FF6B00] uppercase">Back to saved</button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <input 
+                      placeholder="Full Name" 
+                      className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                      value={address.name}
+                      onChange={e => setAddress({...address, name: e.target.value})}
+                    />
+                    <input 
+                      placeholder="Phone Number" 
+                      className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                      value={address.phone}
+                      onChange={e => setAddress({...address, phone: e.target.value})}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        placeholder="Pincode" 
+                        className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                        value={address.pincode}
+                        onChange={e => setAddress({...address, pincode: e.target.value})}
+                      />
+                      <input 
+                        placeholder="City" 
+                        className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                        value={address.city}
+                        onChange={e => setAddress({...address, city: e.target.value})}
+                      />
+                    </div>
+                    <textarea 
+                      placeholder="Full Address (House No, Street, Landmark)" 
+                      rows={3}
+                      className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+                      value={address.fullAddress}
+                      onChange={e => setAddress({...address, fullAddress: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
+
               <button 
-                onClick={() => setStep(3)}
+                onClick={() => {
+                  if (!address.fullAddress || (showManualForm && !address.phone)) {
+                    showError("Please complete the address details");
+                    return;
+                  }
+                  setStep(3);
+                }}
                 className="w-full bg-[#FF6B00] text-white py-4 rounded-2xl font-bold shadow-lg"
               >
-                Save & Continue
+                Continue to Payment
               </button>
             </motion.div>
           )}
@@ -213,7 +303,6 @@ const Checkout = () => {
             >
               <h2 className="text-lg font-bold">Payment & Offers</h2>
               
-              {/* Coupon Section */}
               <div className="space-y-3">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Apply Coupon</p>
                 {!appliedCoupon ? (
