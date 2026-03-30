@@ -91,37 +91,88 @@ const Index = () => {
 
   return (
     <div className="p-4 space-y-6 bg-[#FAFAFA] min-h-screen">
-      {/* Slim & Compact Floating Header */}
-      <div className="flex items-center justify-between bg-white/80 backdrop-blur-xl p-3 rounded-3xl shadow-sm border border-white sticky top-2 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#FF9100] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-100">
-            DP
+      {/* Sticky Header Container (Header + Search Bar) */}
+      <div className="sticky top-0 z-50 -mx-4 px-4 pt-2 pb-4 bg-white/90 backdrop-blur-xl border-b border-gray-100 space-y-4">
+        {/* Top Row: Logo & Profile */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#FF9100] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-100">
+              DP
+            </div>
+            <div>
+              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                {getGreeting()}
+              </p>
+              <h1 className="text-sm font-black text-gray-800 leading-none">
+                {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
+              </h1>
+            </div>
           </div>
-          <div>
-            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
-              {getGreeting()}
-            </p>
-            <h1 className="text-sm font-black text-gray-800 leading-none">
-              {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
-            </h1>
+
+          <div className="flex items-center gap-2">
+            <div className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
+              <MapPin size={10} className="text-[#FF6B00]" />
+              <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Home</span>
+            </div>
+            <button 
+              onClick={() => navigate('/profile')}
+              className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-50"
+            >
+              <img 
+                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
+                className="w-full h-full object-cover"
+                onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
+              />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
-            <MapPin size={10} className="text-[#FF6B00]" />
-            <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Home</span>
-          </div>
-          <button 
-            onClick={() => navigate('/profile')}
-            className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-50"
-          >
-            <img 
-              src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
+        {/* Bottom Row: Search & Filter (Now Sticky) */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search your favorite puri..."
+              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-[1.2rem] border-none shadow-inner focus:ring-2 focus:ring-[#FF6B00] text-sm font-medium"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-          </button>
+          </div>
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <button className={`p-3.5 rounded-[1.2rem] shadow-sm transition-all ${selectedTaste ? 'bg-[#FF6B00] text-white' : 'bg-gray-50 text-[#FF6B00]'}`}>
+                <Filter size={20} />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-[3rem] h-[60vh] p-8 border-none shadow-2xl">
+              <SheetHeader className="flex flex-row items-center justify-between">
+                <SheetTitle className="text-2xl font-black">Filters</SheetTitle>
+                <button onClick={() => {setSelectedTaste(null); setActiveCategory('all');}} className="text-xs font-black text-[#FF6B00] uppercase tracking-widest">Reset</button>
+              </SheetHeader>
+              <div className="mt-10 space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Taste Profile</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {['Spicy', 'Sweet', 'Mix'].map((t) => (
+                      <button 
+                        key={t} 
+                        onClick={() => setSelectedTaste(t)} 
+                        className={`px-8 py-4 rounded-2xl text-sm font-black transition-all border-2 ${selectedTaste === t ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <SheetFooter className="mt-auto pt-6">
+                <SheetClose asChild>
+                  <Button className="w-full bg-[#FF6B00] h-16 rounded-[1.5rem] font-black text-lg shadow-xl shadow-orange-200">Apply Filters</Button>
+                </SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
@@ -166,54 +217,6 @@ const Index = () => {
           <ChevronRight size={16} className="text-white" />
         </div>
         <Crown className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 rotate-12" />
-      </div>
-
-      {/* Search & Filter */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search your favorite puri..."
-            className="w-full pl-12 pr-4 py-4 bg-white rounded-[1.5rem] border-none shadow-sm focus:ring-2 focus:ring-[#FF6B00] text-sm font-medium"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <SheetTrigger asChild>
-            <button className={`p-4 rounded-[1.5rem] shadow-sm transition-all ${selectedTaste ? 'bg-[#FF6B00] text-white' : 'bg-white text-[#FF6B00]'}`}>
-              <Filter size={20} />
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-[3rem] h-[60vh] p-8 border-none shadow-2xl">
-            <SheetHeader className="flex flex-row items-center justify-between">
-              <SheetTitle className="text-2xl font-black">Filters</SheetTitle>
-              <button onClick={() => {setSelectedTaste(null); setActiveCategory('all');}} className="text-xs font-black text-[#FF6B00] uppercase tracking-widest">Reset</button>
-            </SheetHeader>
-            <div className="mt-10 space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Taste Profile</h3>
-                <div className="flex flex-wrap gap-3">
-                  {['Spicy', 'Sweet', 'Mix'].map((t) => (
-                    <button 
-                      key={t} 
-                      onClick={() => setSelectedTaste(t)} 
-                      className={`px-8 py-4 rounded-2xl text-sm font-black transition-all border-2 ${selectedTaste === t ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 border-transparent text-gray-500'}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <SheetFooter className="mt-auto pt-6">
-              <SheetClose asChild>
-                <Button className="w-full bg-[#FF6B00] h-16 rounded-[1.5rem] font-black text-lg shadow-xl shadow-orange-200">Apply Filters</Button>
-              </SheetClose>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
       </div>
 
       {/* Categories */}
