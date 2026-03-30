@@ -85,95 +85,60 @@ const Index = () => {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <motion.div 
-        animate={{ 
-          scale: [1, 1.2, 1],
-          rotate: [0, 180, 360]
-        }} 
-        transition={{ repeat: Infinity, duration: 2 }} 
-        className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full" 
-      />
+      <div className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   return (
     <div className="p-4 space-y-8 bg-[#FAFAFA] min-h-screen">
-      {/* Premium Animated Header */}
-      <motion.div 
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="space-y-4"
-      >
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              whileHover={{ rotate: 15, scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="w-12 h-12 bg-gradient-to-br from-[#FF6B00] to-[#FF9100] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 rotate-3"
-            >
-              DP
-            </motion.div>
-            <div>
-              <motion.p 
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-[10px] font-black text-[#FF6B00] tracking-[0.3em] uppercase"
+      {/* Premium Static Header with Background Effect */}
+      <div className="relative p-6 bg-white rounded-[2.5rem] shadow-xl shadow-orange-100/50 border border-orange-50 overflow-hidden">
+        {/* Subtle Background Glow */}
+        <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#FFF3E0] rounded-full blur-3xl opacity-60"></div>
+        <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-orange-50 rounded-full blur-3xl opacity-60"></div>
+
+        <div className="relative z-10 space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#FF6B00] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-200 rotate-3">
+                DP
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-[#FF6B00] tracking-[0.2em] uppercase">
+                  {getGreeting()}
+                </p>
+                <h1 className="text-xl font-black text-gray-900 leading-none">
+                  {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
+                </h1>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => navigate('/profile')}
+                className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-white shadow-md"
               >
-                {getGreeting()}
-              </motion.p>
-              <motion.h1 
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-xl font-black text-gray-900 leading-none"
-              >
-                {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
-              </motion.h1>
+                <img 
+                  src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
+                />
+              </button>
             </div>
           </div>
-          
-          <div className="flex gap-2">
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              className="p-3 rounded-2xl bg-white shadow-sm border border-gray-50 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              <Heart size={20} />
-            </motion.button>
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/profile')}
-              className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-white shadow-md"
-            >
-              <img 
-                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
-                className="w-full h-full object-cover"
-                onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
-              />
-            </motion.button>
+
+          {/* Location Pill */}
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#FFF3E0] rounded-xl w-fit">
+            <MapPin size={12} className="text-[#FF6B00]" />
+            <span className="text-[10px] font-black text-orange-800 uppercase tracking-wider">Fresh Delivery Near You</span>
           </div>
         </div>
-
-        {/* Location Bar (Premium Touch) */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-50/50 rounded-xl w-fit"
-        >
-          <MapPin size={12} className="text-[#FF6B00]" />
-          <span className="text-[10px] font-bold text-orange-800 uppercase tracking-wider">Delivering to your heart</span>
-          <ChevronRight size={10} className="text-orange-300" />
-        </motion.div>
-      </motion.div>
+      </div>
 
       {/* Banners */}
       <div className="overflow-x-auto no-scrollbar flex gap-4 snap-x">
-        {banners.map((banner, idx) => (
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.5 + (idx * 0.1) }}
+        {banners.map((banner) => (
+          <div 
             key={banner.id} 
             className="min-w-[90%] snap-center bg-gray-100 aspect-[21/9] rounded-[2.5rem] relative overflow-hidden shadow-xl shadow-gray-200"
           >
@@ -182,22 +147,18 @@ const Index = () => {
               <h2 className="text-xl font-black leading-tight">{banner.title}</h2>
               <p className="text-xs opacity-80 font-medium">{banner.subtitle}</p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Leaderboard Entry Banner */}
-      <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        whileTap={{ scale: 0.98 }}
+      <div 
         onClick={() => navigate('/leaderboard')}
         className="bg-gradient-to-r from-gray-900 to-gray-800 p-5 rounded-[2.5rem] flex items-center justify-between shadow-2xl relative overflow-hidden group cursor-pointer"
       >
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex -space-x-3">
-            {topCustomers.slice(0, 3).map((u, i) => (
+            {topCustomers.slice(0, 3).map((u) => (
               <img 
                 key={u.id} 
                 src={getAvatar(u)} 
@@ -215,15 +176,10 @@ const Index = () => {
           <ChevronRight size={16} className="text-white" />
         </div>
         <Crown className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 rotate-12" />
-      </motion.div>
+      </div>
 
       {/* Search & Filter */}
-      <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.7 }}
-        className="flex gap-2"
-      >
+      <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -268,7 +224,7 @@ const Index = () => {
             </SheetFooter>
           </SheetContent>
         </Sheet>
-      </motion.div>
+      </div>
 
       {/* Categories */}
       <div className="space-y-4">
@@ -277,8 +233,7 @@ const Index = () => {
           <button className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest">View All</button>
         </div>
         <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2 px-2">
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
+          <button 
             onClick={() => setActiveCategory('all')} 
             className={`flex-shrink-0 flex flex-col items-center gap-3 transition-all ${activeCategory === 'all' ? 'scale-110' : 'opacity-50'}`}
           >
@@ -286,10 +241,9 @@ const Index = () => {
               <Sparkles size={24} className={activeCategory === 'all' ? 'text-[#FF6B00]' : 'text-gray-400'} />
             </div>
             <span className="text-[10px] font-black uppercase tracking-wider">All</span>
-          </motion.button>
+          </button>
           {categories.map((cat) => (
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
+            <button 
               key={cat.id} 
               onClick={() => setActiveCategory(cat.id)} 
               className={`flex-shrink-0 flex flex-col items-center gap-3 transition-all ${activeCategory === cat.id ? 'scale-110' : 'opacity-50'}`}
@@ -298,7 +252,7 @@ const Index = () => {
                 <img src={cat.image} className="w-full h-full object-cover" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-wider">{cat.name}</span>
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>
@@ -307,11 +261,8 @@ const Index = () => {
       <div className="space-y-4">
         <h2 className="text-lg font-black text-gray-900 px-2">Popular Now</h2>
         <div className="grid grid-cols-2 gap-4">
-          {filteredProducts.map((product, idx) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + (idx * 0.05) }}
+          {filteredProducts.map((product) => (
+            <div
               key={product.id}
               className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group cursor-pointer"
               onClick={() => navigate(`/product/${product.id}`)}
@@ -337,17 +288,15 @@ const Index = () => {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-[#FF6B00] font-black text-lg">₹{product.price}</span>
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                  <button 
                     onClick={(e) => {e.stopPropagation(); addToCart(product); showSuccess(`${product.name} added!`);}} 
-                    className="bg-[#FF6B00] text-white w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl shadow-orange-100"
+                    className="bg-[#FF6B00] text-white w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl shadow-orange-100 active:scale-90 transition-transform"
                   >
                     <Zap size={20} fill="currentColor" />
-                  </motion.button>
+                  </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
