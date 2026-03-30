@@ -31,7 +31,6 @@ const Index = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
-  const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,23 +67,11 @@ const Index = () => {
       setCoupons(cpns);
     });
 
-    const usersQ = query(
-      collection(db, "users"), 
-      where("totalOrders", ">", 0),
-      orderBy("totalOrders", "desc"),
-      limit(10)
-    );
-    const unsubscribeUsers = onSnapshot(usersQ, (snapshot) => {
-      const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTopCustomers(users);
-    });
-
     return () => {
       unsubscribeProducts();
       unsubscribeCats();
       unsubscribeBanners();
       unsubscribeCoupons();
-      unsubscribeUsers();
     };
   }, []);
 
@@ -182,108 +169,27 @@ const Index = () => {
         )}
       </div>
 
-      {/* Wall of Fame - Premium Redesign */}
-      {topCustomers.length > 0 && (
-        <div className="bg-gradient-to-br from-[#FFF3E0] to-white p-6 rounded-[2.5rem] border border-orange-100 shadow-sm space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-white rounded-xl shadow-sm">
-                <Trophy className="text-yellow-500" size={20} />
-              </div>
-              <div>
-                <h2 className="text-base font-black text-gray-800">Wall of Fame</h2>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-[8px] font-black text-orange-600 uppercase tracking-widest">Live Rankings</span>
-                </div>
-              </div>
-            </div>
-            <button className="text-[10px] font-black text-gray-400 uppercase tracking-wider">View All</button>
+      {/* Leaderboard Entry Banner */}
+      <motion.div 
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate('/leaderboard')}
+        className="bg-gradient-to-r from-gray-900 to-gray-800 p-5 rounded-[2rem] flex items-center justify-between shadow-xl relative overflow-hidden group cursor-pointer"
+      >
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-12 h-12 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+            <Trophy className="text-white" size={24} />
           </div>
-
-          {/* Podium */}
-          <div className="flex items-end justify-center gap-3 pt-2">
-            {/* 2nd Place */}
-            {topCustomers[1] && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-2 flex-1"
-              >
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-gray-300 to-gray-400 shadow-lg">
-                    <img src={topCustomers[1].photoURL || 'https://via.placeholder.com/100'} alt="" className="w-full h-full rounded-full object-cover border-2 border-white" />
-                  </div>
-                  <div className="absolute -top-1 -left-1 bg-gray-400 text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black border-2 border-white">2</div>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-black text-gray-700 truncate w-16">{topCustomers[1].displayName?.split(' ')[0]}</p>
-                  <p className="text-[8px] font-bold text-gray-400">{topCustomers[1].totalOrders} Orders</p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 1st Place */}
-            {topCustomers[0] && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-2 flex-1 -mt-4"
-              >
-                <div className="relative">
-                  <div className="w-18 h-18 rounded-full p-1 bg-gradient-to-tr from-yellow-400 to-orange-500 shadow-xl shadow-orange-200">
-                    <img src={topCustomers[0].photoURL || 'https://via.placeholder.com/100'} alt="" className="w-full h-full rounded-full object-cover border-2 border-white" />
-                  </div>
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-yellow-500 drop-shadow-md">
-                    <Crown size={24} fill="currentColor" />
-                  </div>
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-yellow-400 text-white px-2 py-0.5 rounded-full text-[8px] font-black border-2 border-white">1st</div>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs font-black text-gray-800 truncate w-20">{topCustomers[0].displayName?.split(' ')[0]}</p>
-                  <p className="text-[9px] font-black text-orange-500">{topCustomers[0].totalOrders} Orders</p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 3rd Place */}
-            {topCustomers[2] && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-2 flex-1"
-              >
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-orange-300 to-orange-400 shadow-lg">
-                    <img src={topCustomers[2].photoURL || 'https://via.placeholder.com/100'} alt="" className="w-full h-full rounded-full object-cover border-2 border-white" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 bg-orange-400 text-white w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black border-2 border-white">3</div>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-black text-gray-700 truncate w-16">{topCustomers[2].displayName?.split(' ')[0]}</p>
-                  <p className="text-[8px] font-bold text-gray-400">{topCustomers[2].totalOrders} Orders</p>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Horizontal List for others */}
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pt-2">
-            {topCustomers.slice(3).map((customer, idx) => (
-              <div key={customer.id} className="flex items-center gap-2 bg-white/50 backdrop-blur-sm p-1.5 pr-3 rounded-xl border border-white/50 flex-shrink-0">
-                <div className="relative">
-                  <img src={customer.photoURL || 'https://via.placeholder.com/100'} alt="" className="w-8 h-8 rounded-full object-cover border border-gray-100" />
-                  <div className="absolute -top-1 -left-1 bg-gray-800 text-white w-3.5 h-3.5 rounded-full flex items-center justify-center text-[6px] font-black">{idx + 4}</div>
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-gray-800">{customer.displayName?.split(' ')[0]}</p>
-                  <p className="text-[7px] font-bold text-gray-400 uppercase">{customer.totalOrders} Orders</p>
-                </div>
-              </div>
-            ))}
+          <div>
+            <h2 className="text-white font-black text-base">Wall of Fame</h2>
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">See Top Customers</p>
           </div>
         </div>
-      )}
+        <div className="relative z-10 flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
+          <span className="text-white text-[10px] font-black uppercase tracking-wider">View All</span>
+          <ChevronRight size={14} className="text-white" />
+        </div>
+        <Crown className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 rotate-12 group-hover:scale-110 transition-transform" />
+      </motion.div>
 
       {/* Coupons Section */}
       {coupons.length > 0 && (
