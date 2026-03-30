@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy, Tag, Medal, MapPin } from 'lucide-react';
+import { Search, Heart, Filter, Star, Sparkles, Flame, Zap, X, Check, AlertCircle, ChevronRight, Ticket, Copy, Crown, Trophy, Tag, Medal, MapPin, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
@@ -90,46 +90,38 @@ const Index = () => {
   );
 
   return (
-    <div className="p-4 space-y-8 bg-[#FAFAFA] min-h-screen">
-      {/* Premium Vibrant Mesh Header */}
-      <div className="relative p-8 bg-gradient-to-br from-[#FF6B00] via-[#FF4D00] to-[#E64000] rounded-[3rem] shadow-2xl shadow-orange-200 overflow-hidden">
-        {/* Mesh Background Effects */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-400/30 rounded-full blur-[60px] -mr-10 -mt-10"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-600/20 rounded-full blur-[50px] -ml-10 -mb-10"></div>
-        
-        <div className="relative z-10 space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-white/70 tracking-[0.3em] uppercase">
-                {getGreeting()}
-              </p>
-              <h1 className="text-2xl font-black text-white leading-none">
-                {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
-              </h1>
-            </div>
-            
-            <button 
-              onClick={() => navigate('/profile')}
-              className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-white/30 shadow-xl bg-white/10 backdrop-blur-md"
-            >
-              <img 
-                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
-                className="w-full h-full object-cover"
-                onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
-              />
-            </button>
+    <div className="p-4 space-y-6 bg-[#FAFAFA] min-h-screen">
+      {/* Slim & Compact Floating Header */}
+      <div className="flex items-center justify-between bg-white/80 backdrop-blur-xl p-3 rounded-3xl shadow-sm border border-white sticky top-2 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#FF9100] rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-orange-100">
+            DP
           </div>
+          <div>
+            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              {getGreeting()}
+            </p>
+            <h1 className="text-sm font-black text-gray-800 leading-none">
+              {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
+            </h1>
+          </div>
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
-              <MapPin size={14} className="text-white" />
-              <span className="text-[10px] font-black text-white uppercase tracking-wider">Fresh Delivery Near You</span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-2 bg-yellow-400 rounded-2xl shadow-lg shadow-yellow-600/20">
-              <Star size={12} fill="currentColor" className="text-orange-600" />
-              <span className="text-[10px] font-black text-orange-600">4.9</span>
-            </div>
+        <div className="flex items-center gap-2">
+          <div className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
+            <MapPin size={10} className="text-[#FF6B00]" />
+            <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Home</span>
           </div>
+          <button 
+            onClick={() => navigate('/profile')}
+            className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-50"
+          >
+            <img 
+              src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
+              className="w-full h-full object-cover"
+              onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
+            />
+          </button>
         </div>
       </div>
 
