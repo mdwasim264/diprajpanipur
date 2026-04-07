@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, doc, updateDoc, increment, orderBy, limit } from 'firebase/firestore';
 import { showSuccess, showError } from '@/utils/toast';
+import UserAvatar from '@/components/UserAvatar';
 import {
   Sheet,
   SheetContent,
@@ -75,8 +76,6 @@ const Index = () => {
     return "Good Evening";
   };
 
-  const getAvatar = (u: any) => u.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.uid || u.id}`;
-
   const filteredProducts = products.filter(p => 
     (activeCategory === 'all' || p.category === activeCategory) &&
     (selectedTaste === null || p.taste === selectedTaste) &&
@@ -84,15 +83,15 @@ const Index = () => {
   );
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   return (
-    <div className="p-4 space-y-6 bg-[#FAFAFA] min-h-screen">
+    <div className="p-4 space-y-6 bg-background min-h-screen">
       {/* Sticky Header Container (Header + Search Bar) */}
-      <div className="sticky top-0 z-50 -mx-4 px-4 pt-2 pb-4 bg-white/90 backdrop-blur-xl border-b border-gray-100 space-y-4">
+      <div className="sticky top-0 z-50 -mx-4 px-4 pt-2 pb-4 bg-background/90 backdrop-blur-xl border-b border-border space-y-4">
         {/* Top Row: Logo & Profile */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -100,28 +99,29 @@ const Index = () => {
               DP
             </div>
             <div>
-              <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+              <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">
                 {getGreeting()}
               </p>
-              <h1 className="text-sm font-black text-gray-800 leading-none">
+              <h1 className="text-sm font-black text-foreground leading-none">
                 {user ? user.displayName?.split(' ')[0] : 'Foodie'}! 👋
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
+            <div className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 rounded-full border border-orange-100 dark:border-orange-900/30">
               <MapPin size={10} className="text-[#FF6B00]" />
-              <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Home</span>
+              <span className="text-[9px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-tighter">Home</span>
             </div>
             <button 
               onClick={() => navigate('/profile')}
-              className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-50"
+              className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-background shadow-sm bg-muted"
             >
-              <img 
-                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
+              <UserAvatar 
+                src={user?.photoURL} 
+                uid={user?.uid} 
+                name={user?.displayName || 'guest'} 
                 className="w-full h-full object-cover"
-                onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`)}
               />
             </button>
           </div>
@@ -130,18 +130,18 @@ const Index = () => {
         {/* Bottom Row: Search & Filter (Now Sticky) */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <input
               type="text"
               placeholder="Search your favorite puri..."
-              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-[1.2rem] border-none shadow-inner focus:ring-2 focus:ring-[#FF6B00] text-sm font-medium"
+              className="w-full pl-12 pr-4 py-3.5 bg-muted rounded-[1.2rem] border-none shadow-inner focus:ring-2 focus:ring-[#FF6B00] text-sm font-medium"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
-              <button className={`p-3.5 rounded-[1.2rem] shadow-sm transition-all ${selectedTaste ? 'bg-[#FF6B00] text-white' : 'bg-gray-50 text-[#FF6B00]'}`}>
+              <button className={`p-3.5 rounded-[1.2rem] shadow-sm transition-all ${selectedTaste ? 'bg-[#FF6B00] text-white' : 'bg-muted text-[#FF6B00]'}`}>
                 <Filter size={20} />
               </button>
             </SheetTrigger>
@@ -152,13 +152,13 @@ const Index = () => {
               </SheetHeader>
               <div className="mt-10 space-y-8">
                 <div className="space-y-4">
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Taste Profile</h3>
+                  <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest">Taste Profile</h3>
                   <div className="flex flex-wrap gap-3">
                     {['Spicy', 'Sweet', 'Mix'].map((t) => (
                       <button 
                         key={t} 
                         onClick={() => setSelectedTaste(t)} 
-                        className={`px-8 py-4 rounded-2xl text-sm font-black transition-all border-2 ${selectedTaste === t ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-gray-50 border-transparent text-gray-500'}`}
+                        className={`px-8 py-4 rounded-2xl text-sm font-black transition-all border-2 ${selectedTaste === t ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-100' : 'bg-muted border-transparent text-muted-foreground'}`}
                       >
                         {t}
                       </button>
@@ -181,7 +181,7 @@ const Index = () => {
         {banners.map((banner) => (
           <div 
             key={banner.id} 
-            className="min-w-[90%] snap-center bg-gray-100 aspect-[21/9] rounded-[2.5rem] relative overflow-hidden shadow-xl shadow-gray-200"
+            className="min-w-[90%] snap-center bg-muted aspect-[21/9] rounded-[2.5rem] relative overflow-hidden shadow-xl shadow-gray-200 dark:shadow-none"
           >
             <img src={banner.image} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end text-white">
@@ -200,12 +200,9 @@ const Index = () => {
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex -space-x-3">
             {topCustomers.slice(0, 3).map((u) => (
-              <img 
-                key={u.id} 
-                src={getAvatar(u)} 
-                className="w-10 h-10 rounded-full border-2 border-gray-800 object-cover bg-gray-700"
-                onError={(e) => (e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.id}`)}
-              />
+              <div key={u.id} className="w-10 h-10 rounded-full border-2 border-gray-800 overflow-hidden bg-gray-700">
+                <UserAvatar src={u.photoURL} uid={u.uid || u.id} name={u.displayName} className="w-full h-full object-cover" />
+              </div>
             ))}
           </div>
           <div>
@@ -222,7 +219,7 @@ const Index = () => {
       {/* Categories */}
       <div className="space-y-4">
         <div className="flex justify-between items-end px-2">
-          <h2 className="text-lg font-black text-gray-900">Categories</h2>
+          <h2 className="text-lg font-black text-foreground">Categories</h2>
           <button className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest">View All</button>
         </div>
         <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2 px-2">
@@ -230,8 +227,8 @@ const Index = () => {
             onClick={() => setActiveCategory('all')} 
             className={`flex-shrink-0 flex flex-col items-center gap-3 transition-all ${activeCategory === 'all' ? 'scale-110' : 'opacity-50'}`}
           >
-            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center border-2 transition-all ${activeCategory === 'all' ? 'border-[#FF6B00] bg-white shadow-lg shadow-orange-50' : 'border-transparent bg-white shadow-sm'}`}>
-              <Sparkles size={24} className={activeCategory === 'all' ? 'text-[#FF6B00]' : 'text-gray-400'} />
+            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center border-2 transition-all ${activeCategory === 'all' ? 'border-[#FF6B00] bg-card shadow-lg shadow-orange-50' : 'border-transparent bg-card shadow-sm'}`}>
+              <Sparkles size={24} className={activeCategory === 'all' ? 'text-[#FF6B00]' : 'text-muted-foreground'} />
             </div>
             <span className="text-[10px] font-black uppercase tracking-wider">All</span>
           </button>
@@ -252,12 +249,12 @@ const Index = () => {
 
       {/* Products */}
       <div className="space-y-4">
-        <h2 className="text-lg font-black text-gray-900 px-2">Popular Now</h2>
+        <h2 className="text-lg font-black text-foreground px-2">Popular Now</h2>
         <div className="grid grid-cols-2 gap-4">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden flex flex-col group cursor-pointer"
+              className="bg-card rounded-[2.5rem] shadow-sm border border-border overflow-hidden flex flex-col group cursor-pointer"
               onClick={() => navigate(`/product/${product.id}`)}
             >
               <div className="relative h-44 overflow-hidden">
@@ -276,8 +273,8 @@ const Index = () => {
               </div>
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-black text-sm line-clamp-1 text-gray-800">{product.name}</h3>
-                  <p className="text-[10px] font-medium text-gray-400 mt-1 line-clamp-1">{product.description}</p>
+                  <h3 className="font-black text-sm line-clamp-1 text-foreground">{product.name}</h3>
+                  <p className="text-[10px] font-medium text-muted-foreground mt-1 line-clamp-1">{product.description}</p>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-[#FF6B00] font-black text-lg">₹{product.price}</span>

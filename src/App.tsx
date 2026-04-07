@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import Leaderboard from './pages/Leaderboard';
@@ -17,12 +17,25 @@ import { ThemeProvider } from './components/theme-provider';
 import BottomNav from './components/BottomNav';
 import { Toaster } from 'sonner';
 import NotificationListener from './components/NotificationListener';
+import SplashScreen from './components/SplashScreen';
+import { AnimatePresence } from 'framer-motion';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <AuthProvider>
       <CartProvider>
         <ThemeProvider defaultTheme="system" attribute="class">
+          <AnimatePresence>
+            {showSplash && <SplashScreen />}
+          </AnimatePresence>
+          
           <Router>
             <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
               <NotificationListener />

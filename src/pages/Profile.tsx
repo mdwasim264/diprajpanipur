@@ -5,17 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { Switch } from "@/components/ui/switch";
+import UserAvatar from '@/components/UserAvatar';
 
 const Profile = () => {
   const { user, profile, logout, login } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-
-  const getProfileImage = () => {
-    if (profile?.photoURL) return profile.photoURL;
-    if (user?.photoURL) return user.photoURL;
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`;
-  };
 
   if (!user) {
     return (
@@ -58,16 +53,11 @@ const Profile = () => {
         <div className="relative z-10 flex items-center gap-5">
           <div className="relative">
             <div className="w-20 h-20 rounded-[1.8rem] p-1 bg-gradient-to-tr from-[#FF6B00] to-[#FF9100] shadow-lg rotate-3">
-              <img 
-                src={getProfileImage()} 
-                alt="Profile" 
+              <UserAvatar 
+                src={profile?.photoURL || user?.photoURL} 
+                uid={user.uid}
+                name={user.displayName || ''}
                 className="w-full h-full rounded-[1.5rem] object-cover border-2 border-white dark:border-gray-800 -rotate-3 bg-muted"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (!target.src.includes('dicebear')) {
-                    target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`;
-                  }
-                }}
               />
             </div>
             <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-4 border-white dark:border-gray-800"></div>
