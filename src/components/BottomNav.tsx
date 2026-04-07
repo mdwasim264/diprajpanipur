@@ -15,7 +15,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 flex justify-around items-center z-50 pb-safe">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border px-4 py-2 flex justify-around items-center z-50 pb-safe transition-colors duration-300">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -23,12 +23,12 @@ const BottomNav = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center relative ${isActive ? 'text-[#FF6B00]' : 'text-gray-500'}`}
+            className={`flex flex-col items-center relative transition-all ${isActive ? 'text-[#FF6B00] scale-110' : 'text-muted-foreground'}`}
           >
             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+            <span className="text-[10px] mt-1 font-black uppercase tracking-tighter">{item.label}</span>
             {item.badge > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#FF6B00] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+              <span className="absolute -top-1 -right-1 bg-[#FF6B00] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center border-2 border-background">
                 {item.badge}
               </span>
             )}

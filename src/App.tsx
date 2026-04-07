@@ -13,6 +13,7 @@ import Payments from './pages/Payments';
 import Notifications from './pages/Notifications';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './components/theme-provider';
 import BottomNav from './components/BottomNav';
 import { Toaster } from 'sonner';
 import NotificationListener from './components/NotificationListener';
@@ -21,26 +22,28 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50 pb-20">
-            <NotificationListener />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/addresses" element={<Addresses />} />
-              <Route path="/payments" element={<Payments />} />
-              <Route path="/notifications" element={<Notifications />} />
-            </Routes>
-            <BottomNav />
-            <Toaster position="top-center" richColors />
-          </div>
-        </Router>
+        <ThemeProvider defaultTheme="system" attribute="class">
+          <Router>
+            <div className="min-h-screen bg-background text-foreground pb-20 transition-colors duration-300">
+              <NotificationListener />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/addresses" element={<Addresses />} />
+                <Route path="/payments" element={<Payments />} />
+                <Route path="/notifications" element={<Notifications />} />
+              </Routes>
+              <BottomNav />
+              <Toaster position="top-center" richColors />
+            </div>
+          </Router>
+        </ThemeProvider>
       </CartProvider>
     </AuthProvider>
   );
